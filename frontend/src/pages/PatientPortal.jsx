@@ -823,22 +823,7 @@ export default function PatientPortal() {
           </select>
         </div>
 
-        <div>
-          <label style={dashStyles.inputLabel}>Select Specialist Doctor</label>
-          <select
-            value={bookingData.doctor}
-            onChange={(e) => setBookingData({ ...bookingData, doctor: e.target.value })}
-            style={dashStyles.editSelect}
-          >
-            {doctorsList
-              .filter((doc) => bookingData.dept === 'All' || doc.dept === bookingData.dept)
-              .map((doc) => (
-                <option key={doc.id} value={`${doc.name} (${doc.dept} Specialist)`}>
-                  {doc.name} ({doc.dept} Specialist)
-                </option>
-              ))}
-          </select>
-        </div>
+
 
         {/* --- APPOINTMENT TYPE SELECTOR --- */}
         <div>
