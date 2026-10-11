@@ -112,6 +112,7 @@ export default function PatientPortal() {
     doctor: 'Dr. Ananya Verma (Neurology Specialist)',
     date: '',
     time: '10:00 AM',
+    type: 'In-Person',
     reportFile: null,
   });
   const [bookingSuccess, setBookingSuccess] = useState('');
@@ -253,6 +254,7 @@ export default function PatientPortal() {
       dept: bookingData.dept,
       date: bookingData.date,
       time: bookingData.time,
+      appointment_type: bookingData.type,
       reportFile: bookingData.reportFile || null,
       status: 'Confirmed',
     };
@@ -797,29 +799,73 @@ export default function PatientPortal() {
           </div>
         )}
 
-        {/* TAB 3: APPOINTMENT BOOKING WITH CANCEL OPTION */}
-        {activeTab === 'appointments' && (
-          <div style={dashStyles.profileGrid}>
-            <div style={dashStyles.card}>
-              <h3 style={dashStyles.sectionHeading}>📅 Book Doctor Appointment</h3>
-              {bookingSuccess && <div style={dashStyles.successAlert}>{bookingSuccess}</div>}
-              {bookingError && <div style={dashStyles.errorAlert}>⚠️ {bookingError}</div>}
+       {/* TAB 3: APPOINTMENT BOOKING WITH CANCEL OPTION */}
+{activeTab === 'appointments' && (
+  <div style={dashStyles.profileGrid}>
+    <div style={dashStyles.card}>
+      <h3 style={dashStyles.sectionHeading}>📅 Book Doctor Appointment</h3>
+      {bookingSuccess && <div style={dashStyles.successAlert}>{bookingSuccess}</div>}
+      {bookingError && <div style={dashStyles.errorAlert}>⚠️ {bookingError}</div>}
 
-              <form onSubmit={handleBookAppointment} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div>
-                  <label style={dashStyles.inputLabel}>Select Department</label>
-                  <select
-                    value={bookingData.dept}
-                    onChange={(e) => setBookingData({ ...bookingData, dept: e.target.value })}
-                    style={dashStyles.editSelect}
-                  >
-                    <option>Neurology</option>
-                    <option>Cardiology</option>
-                    <option>General Consultation</option>
-                    <option>Pediatrics</option>
-                    <option>Orthopedics</option>
-                  </select>
-                </div>
+      <form onSubmit={handleBookAppointment} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div>
+          <label style={dashStyles.inputLabel}>Select Department</label>
+          <select
+            value={bookingData.dept}
+            onChange={(e) => setBookingData({ ...bookingData, dept: e.target.value })}
+            style={dashStyles.editSelect}
+          >
+            <option>Neurology</option>
+            <option>Cardiology</option>
+            <option>General Consultation</option>
+            <option>Pediatrics</option>
+            <option>Orthopedics</option>
+          </select>
+        </div>
+
+        <div>
+          <label style={dashStyles.inputLabel}>Select Specialist Doctor</label>
+          <select
+            value={bookingData.doctor}
+            onChange={(e) => setBookingData({ ...bookingData, doctor: e.target.value })}
+            style={dashStyles.editSelect}
+          >
+            {doctorsList
+              .filter((doc) => bookingData.dept === 'All' || doc.dept === bookingData.dept)
+              .map((doc) => (
+                <option key={doc.id} value={`${doc.name} (${doc.dept} Specialist)`}>
+                  {doc.name} ({doc.dept} Specialist)
+                </option>
+              ))}
+          </select>
+        </div>
+
+        {/* --- APPOINTMENT TYPE SELECTOR --- */}
+        <div>
+          <label style={dashStyles.inputLabel}>Appointment Type</label>
+          <div style={{ display: 'flex', gap: '20px', marginTop: '6px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+              <input
+                type="radio"
+                name="appointmentType"
+                value="In-Person"
+                checked={bookingData.type === 'In-Person'}
+                onChange={(e) => setBookingData({ ...bookingData, type: e.target.value })}
+              />
+              🏥 In-Person
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+              <input
+                type="radio"
+                name="appointmentType"
+                value="Online"
+                checked={bookingData.type === 'Online'}
+                onChange={(e) => setBookingData({ ...bookingData, type: e.target.value })}
+              />
+              💻 Online Consultation
+            </label>
+          </div>
+        </div>
 
                 <div>
                   <label style={dashStyles.inputLabel}>Select Specialist Doctor</label>
