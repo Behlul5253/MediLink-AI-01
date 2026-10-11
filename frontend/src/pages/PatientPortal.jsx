@@ -1,546 +1,1313 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function PatientPortal() {
   const navigate = useNavigate();
-  const [patientName, setPatientName] = useState("Patient");
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [appointments, setAppointments] = useState([]);
-  const [prescriptions, setPrescriptions] = useState([]);
+  const [activeTab, setActiveTab] = useState('profile');
 
-  // Patient Profile Information state
-  const [profile, setProfile] = useState({
-    name: "Rahul Verma",
-    age: "22",
-    gender: "Male",
-    bloodGroup: "O+",
-    phone: "1234567890",
-    email: "patient@medilink.ai"
+  // Today's Date String for Date Input Validation (YYYY-MM-DD)
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // Editable Profile State
+  const [isEditing, setIsEditing] = useState(false);
+  const [patientProfile, setPatientProfile] = useState({
+    id: 'PAT-176763',
+    name: 'Rahul Sharma',
+    email: 'rahul@gmail.com',
+    phone: '1234567890',
+    age: '25',
+    gender: 'Male',
+    bloodGroup: 'AB-',
+    department: 'Neurology',
+    allergies: 'Penicillin, Dust',
   });
 
-  // Edit Profile Modal / Form State
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [editForm, setEditForm] = useState(profile);
-
-  // Booking Form State
-  const [doctorName, setDoctorName] = useState("Dr. Rajesh Sharma");
-  const [specialty, setSpecialty] = useState("Cardiology");
-  const [date, setDate] = useState("2026-11-10");
-  const [time, setTime] = useState("10:00 AM - 10:30 AM");
-  const [consultType, setConsultType] = useState("Video Call");
-  const [symptoms, setSymptoms] = useState("");
-  const [reportFile, setReportFile] = useState(null);
-
-  // AI Chat State
-  const [chatMessages, setChatMessages] = useState([
-    { sender: "ai", text: "Hello! I am MediLink AI Health Assistant. How can I assist you with your health or medical reports today?" }
+  // Doctor Directory State & Filter
+  const [selectedDeptFilter, setSelectedDeptFilter] = useState('All');
+  const [doctorsList] = useState([
+    {
+      id: 1,
+      name: 'Dr. Ananya Verma',
+      dept: 'Neurology',
+      degree: 'MD, DM (Neurology)',
+      experience: '12 Years Exp.',
+      bio: 'Specialist in migraines, neuro-vascular disorders, and cognitive healthcare.',
+      hours: '10:00 AM - 02:00 PM',
+      status: 'Available Today',
+      avatarColor: '#0D9488',
+    },
+    {
+      id: 2,
+      name: 'Dr. Rajesh Kumar',
+      dept: 'Cardiology',
+      degree: 'MBBS, MD, FACC',
+      experience: '16 Years Exp.',
+      bio: 'Expert in preventive cardiology, blood pressure management, and ECG diagnostics.',
+      hours: '11:00 AM - 04:00 PM',
+      status: 'Available Today',
+      avatarColor: '#2563EB',
+    },
+    {
+      id: 3,
+      name: 'Dr. Priya Nair',
+      dept: 'General Consultation',
+      degree: 'MBBS, MD (Internal Medicine)',
+      experience: '9 Years Exp.',
+      bio: 'Focuses on primary care, viral infections, lifestyle disorders, and routine checkups.',
+      hours: '09:00 AM - 01:00 PM',
+      status: 'In Consultation',
+      avatarColor: '#059669',
+    },
+    {
+      id: 4,
+      name: 'Dr. Vikramaditya Seth',
+      dept: 'Orthopedics',
+      degree: 'MS (Orthopedics), MCh',
+      experience: '14 Years Exp.',
+      bio: 'Specialized in joint replacement, sports injury rehabilitation, and bone health.',
+      hours: '02:00 PM - 06:00 PM',
+      status: 'Available Today',
+      avatarColor: '#D97706',
+    },
+    {
+      id: 5,
+      name: 'Dr. Meera Iyer',
+      dept: 'Pediatrics',
+      degree: 'MD (Pediatrics), DCH',
+      experience: '10 Years Exp.',
+      bio: 'Dedicated child care physician focusing on growth tracking, immunizations, and pediatric wellness.',
+      hours: '10:30 AM - 03:30 PM',
+      status: 'In Consultation',
+      avatarColor: '#7C3AED',
+    },
   ]);
-  const [chatInput, setChatInput] = useState("");
 
+  // AI Feature State inside Patient Profile
+  const [labReportFile, setLabReportFile] = useState(null);
+  const [labAnalysis, setLabAnalysis] = useState(null);
+  const [isAnalyzingReport, setIsAnalyzingReport] = useState(false);
+
+  const [symptomLog, setSymptomLog] = useState('');
+  const [loggedSymptoms, setLoggedSymptoms] = useState([
+    { date: 'Oct 08, 2026', text: 'Mild headache after screen time', severity: 'Low' },
+  ]);
+
+  const [allergyCheckInput, setAllergyCheckInput] = useState('');
+  const [allergyWarning, setAllergyWarning] = useState('');
+
+  const [clinicalDigest, setClinicalDigest] = useState('');
+  const [isGeneratingDigest, setIsGeneratingDigest] = useState(false);
+
+  // Medical History Timeline State
+  const [medicalTimeline] = useState([
+    { date: 'Oct 2026', title: 'Routine Neurological Checkup', dept: 'Neurology', doctor: 'Dr. Ananya Verma' },
+    { date: 'Aug 2026', title: 'Complete Blood Count (CBC) & Metabolic Panel', dept: 'Diagnostics', doctor: 'Dr. Priya Nair' },
+    { date: 'Feb 2026', title: 'General Physical & ECG', dept: 'Cardiology', doctor: 'Dr. Rajesh Kumar' },
+  ]);
+
+  // Appointment State
+  const [appointments, setAppointments] = useState([]);
+  const [bookingData, setBookingData] = useState({
+    dept: 'Neurology',
+    doctor: 'Dr. Ananya Verma (Neurology Specialist)',
+    date: '',
+    time: '10:00 AM',
+    reportFile: null,
+  });
+  const [bookingSuccess, setBookingSuccess] = useState('');
+  const [bookingError, setBookingError] = useState('');
+
+  // Conversational AI Health Chatbot State
+  const [chatMessages, setChatMessages] = useState([
+    {
+      sender: 'bot',
+      text: 'Hello! I am your MediLink AI Health Assistant. You can ask health questions or simply say: "Book an appointment with Dr. Ananya Verma on 2026-10-25 at 10:00 AM" and I will handle it for you!',
+    },
+  ]);
+  const [chatInput, setChatInput] = useState('');
+
+  // REDIRECT DOCTORS TO DOCTOR DASHBOARD AUTOMATICALLY
   useEffect(() => {
-    // 1. Load patient name & profile details
-    const storedName = localStorage.getItem("userName");
-    if (storedName) {
-      setPatientName(storedName);
-      setProfile(prev => ({ ...prev, name: storedName }));
+    const userRole = localStorage.getItem('user_role');
+    if (userRole === 'doctor') {
+      navigate('/doctor-dashboard');
+      return;
     }
 
-    const storedProfile = localStorage.getItem("patientProfile");
-    if (storedProfile) {
-      const parsed = JSON.parse(storedProfile);
-      setProfile(parsed);
-      setEditForm(parsed);
-      if (parsed.name) setPatientName(parsed.name);
+    const saved = localStorage.getItem('user');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setPatientProfile((prev) => ({ ...prev, ...parsed }));
+      } catch (e) {}
     }
+  }, [navigate]);
 
-    // 2. Load Appointments from localStorage (default to empty array)
-    const savedAppointments = localStorage.getItem("patientAppointments");
-    if (savedAppointments) {
-      const parsed = JSON.parse(savedAppointments);
-      setAppointments(parsed.filter(appt => appt.status !== "Cancelled"));
-    } else {
-      setAppointments([]);
-      localStorage.setItem("patientAppointments", JSON.stringify([]));
-    }
-
-    // 3. Load Prescriptions from localStorage
-    const savedPrescriptions = localStorage.getItem("patientPrescriptions");
-    if (savedPrescriptions) {
-      setPrescriptions(JSON.parse(savedPrescriptions));
-    }
-  }, []);
+  const handleProfileChange = (e) => {
+    setPatientProfile({ ...patientProfile, [e.target.name]: e.target.value });
+  };
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
-    setProfile(editForm);
-    setPatientName(editForm.name);
-    localStorage.setItem("patientProfile", JSON.stringify(editForm));
-    localStorage.setItem("userName", editForm.name);
-    setIsEditingProfile(false);
-    alert("Profile updated successfully!");
+    setIsEditing(false);
+    localStorage.setItem('user', JSON.stringify(patientProfile));
   };
 
-  const handleCancelAppointment = (id) => {
-    const updated = appointments.filter(appt => appt.id !== id);
-    setAppointments(updated);
-    localStorage.setItem("patientAppointments", JSON.stringify(updated));
-    alert("Appointment cancelled and removed successfully.");
+  const handleQuickBookDoctor = (doc) => {
+    setBookingData({
+      ...bookingData,
+      dept: doc.dept,
+      doctor: `${doc.name} (${doc.dept} Specialist)`,
+    });
+    setActiveTab('appointments');
   };
 
-  const handleResetSampleAppointments = () => {
-    const initialAppointments = [
-      {
-        id: Date.now(),
-        doctorName: "Dr. Rajesh Sharma",
-        specialty: "Cardiology",
-        date: "2026-11-05",
-        time: "09:00 AM - 09:30 AM",
-        type: "Video Call",
-        reportName: "Clinical Summary Patient.pdf",
-        reportUrl: "http://localhost:8000/uploads/Clinical Summary Patient.pdf",
-        status: "Confirmed"
-      }
-    ];
-    setAppointments(initialAppointments);
-    localStorage.setItem("patientAppointments", JSON.stringify(initialAppointments));
-    alert("Sample appointments reloaded!");
+  const handleAnalyzeLabReport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setLabReportFile(file.name);
+    setIsAnalyzingReport(true);
+    setLabAnalysis(null);
+
+    setTimeout(() => {
+      setLabAnalysis({
+        summary: 'Blood parameters are generally stable. Slight elevation noted in fasting glucose levels.',
+        metrics: [
+          { name: 'Hemoglobin', value: '14.2 g/dL', status: 'Normal' },
+          { name: 'Fasting Glucose', value: '112 mg/dL', status: 'Slightly High' },
+          { name: 'Total Cholesterol', value: '185 mg/dL', status: 'Normal' },
+        ],
+        recommendation: 'Maintain hydration and reduce refined sugar intake. Consider consulting General Medicine if glucose remains elevated.',
+      });
+      setIsAnalyzingReport(false);
+    }, 1200);
+  };
+
+  const handleAddSymptomLog = (e) => {
+    e.preventDefault();
+    if (!symptomLog.trim()) return;
+
+    const newEntry = {
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      text: symptomLog,
+      severity: symptomLog.toLowerCase().includes('severe') || symptomLog.toLowerCase().includes('pain') ? 'Moderate' : 'Low',
+    };
+
+    setLoggedSymptoms([newEntry, ...loggedSymptoms]);
+    setSymptomLog('');
+  };
+
+  const handleCheckAllergySafety = (e) => {
+    e.preventDefault();
+    if (!allergyCheckInput.trim()) return;
+
+    const inputLower = allergyCheckInput.toLowerCase();
+    const knownAllergies = patientProfile.allergies.toLowerCase();
+
+    if (knownAllergies.includes('penicillin') && (inputLower.includes('penicillin') || inputLower.includes('amoxicillin'))) {
+      setAllergyWarning('🚨 CONTRAINDICATION DETECTED: You have a recorded Penicillin allergy! Avoid this medication.');
+    } else if (knownAllergies.includes('dust') && inputLower.includes('dust')) {
+      setAllergyWarning('⚠️ ALLERGY RISK: Recorded sensitivity to dust particles. Use protective mask.');
+    } else {
+      setAllergyWarning('✅ No direct adverse allergy triggers found for your recorded profile.');
+    }
+  };
+
+  const handleGenerateClinicalDigest = () => {
+    setIsGeneratingDigest(true);
+    setTimeout(() => {
+      setClinicalDigest(
+        `PATIENT BRIEF (${patientProfile.name}, ${patientProfile.age}Y, ${patientProfile.gender})\n` +
+          `• Primary Dept: ${patientProfile.department}\n` +
+          `• Blood Group: ${patientProfile.bloodGroup} | Allergies: ${patientProfile.allergies}\n` +
+          `• Recent Logs: ${loggedSymptoms[0]?.text || 'No recent symptoms logged.'}\n` +
+          `• Recommendation: Ready for physician review.`
+      );
+      setIsGeneratingDigest(false);
+    }, 1000);
   };
 
   const handleBookAppointment = (e) => {
     e.preventDefault();
-    const newAppointment = {
+    setBookingSuccess('');
+    setBookingError('');
+
+    if (!bookingData.date) {
+      setBookingError('Please select an appointment date.');
+      return;
+    }
+
+    if (bookingData.date < todayStr) {
+      setBookingError('Cannot book an appointment for a past date. Please select today or a future date.');
+      return;
+    }
+
+    const newAppt = {
       id: Date.now(),
-      name: profile.name,
-      age: profile.age,
-      gender: profile.gender,
-      bloodGroup: profile.bloodGroup,
-      phone: profile.phone,
-      doctorName: doctorName,
-      specialty: specialty,
-      date: date,
-      time: time,
-      type: consultType,
-      symptoms: symptoms || "General checkup",
-      reportName: reportFile ? reportFile.name : "medical_report.jpeg",
-      reportUrl: reportFile ? URL.createObjectURL(reportFile) : "http://localhost:8000/uploads/medical_report.jpeg",
-      status: "Confirmed"
+      name: patientProfile.name,
+      age: patientProfile.age,
+      gender: patientProfile.gender,
+      bloodGroup: patientProfile.bloodGroup,
+      doctor: bookingData.doctor,
+      dept: bookingData.dept,
+      date: bookingData.date,
+      time: bookingData.time,
+      reportFile: bookingData.reportFile || null,
+      status: 'Confirmed',
     };
 
-    const existing = JSON.parse(localStorage.getItem("patientAppointments") || "[]");
-    const updatedList = [newAppointment, ...existing];
-    localStorage.setItem("patientAppointments", JSON.stringify(updatedList));
-    setAppointments(updatedList.filter(a => a.status !== "Cancelled"));
+    const updatedAppts = [newAppt, ...appointments];
+    setAppointments(updatedAppts);
 
-    alert("Appointment booked successfully!");
-    setActiveTab("dashboard");
-    setSymptoms("");
-    setReportFile(null);
+    // Sync automatically with doctor dashboard queue via localStorage
+    localStorage.setItem('hospital_appointments', JSON.stringify(updatedAppts));
+
+    setBookingSuccess(`Appointment booked with ${bookingData.doctor} on ${bookingData.date} at ${bookingData.time}!`);
+    setBookingData({
+      dept: 'Neurology',
+      doctor: 'Dr. Ananya Verma (Neurology Specialist)',
+      date: '',
+      time: '10:00 AM',
+      reportFile: null,
+    });
+
+    setTimeout(() => setBookingSuccess(''), 4000);
   };
 
-  const handleSendMessage = (e) => {
+  const handleCancelAppointment = (id) => {
+    if (window.confirm('Are you sure you want to cancel this appointment?')) {
+      setAppointments((prev) => prev.filter((a) => a.id !== id));
+    }
+  };
+
+  const handleSendChatMessage = (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
-    const userMsg = chatInput;
-    const updatedMessages = [...chatMessages, { sender: "user", text: userMsg }];
-    setChatMessages(updatedMessages);
-    setChatInput("");
+    const userQuery = chatInput.trim();
+    setChatMessages((prev) => [...prev, { sender: 'user', text: userQuery }]);
+    setChatInput('');
 
-    // Simulate AI response
     setTimeout(() => {
-      let aiReply = "Based on your query, I recommend staying hydrated, resting well, and booking an appointment with one of our specialists if symptoms persist.";
-      const lower = userMsg.toLowerCase();
-      if (lower.includes("cough") || lower.includes("throat") || lower.includes("cold")) {
-        aiReply = "For cough and throat irritation, warm saline gargles, honey with ginger, and adequate rest can help. If it persists over 3 days, consider consulting an ENT specialist.";
-      } else if (lower.includes("chest") || lower.includes("heart")) {
-        aiReply = "Chest discomfort should be evaluated promptly. Please book an urgent consultation with our cardiologist, Dr. Rajesh Sharma.";
-      } else if (lower.includes("headache") || lower.includes("migraine")) {
-        aiReply = "Headaches can be triggered by stress, dehydration, or lack of sleep. Ensure you are resting in a quiet, dark room and drinking enough water.";
+      const q = userQuery.toLowerCase();
+      let botReply = '';
+
+      if (q.includes('book') || q.includes('appointment') || q.includes('schedule')) {
+        const dateMatch = userQuery.match(/\d{4}-\d{2}-\d{2}/);
+        const matchedDoc = doctorsList.find((doc) => q.includes(doc.name.toLowerCase()) || q.includes(doc.dept.toLowerCase()));
+
+        if (dateMatch) {
+          const targetDate = dateMatch[0];
+
+          if (targetDate < todayStr) {
+            botReply = `I noticed you requested ${targetDate}, which is in the past! Please provide a current or future date.`;
+          } else {
+            const chosenDoc = matchedDoc ? matchedDoc : doctorsList[0];
+            const newAutoAppt = {
+              id: Date.now(),
+              doctor: `${chosenDoc.name} (${chosenDoc.dept} Specialist)`,
+              dept: chosenDoc.dept,
+              date: targetDate,
+              time: '10:00 AM',
+              reportFile: null,
+              status: 'Confirmed',
+            };
+
+            setAppointments((prev) => [...prev, newAutoAppt]);
+            botReply = `✅ Success! I have automatically booked your appointment with ${chosenDoc.name} (${chosenDoc.dept}) for ${targetDate} at 10:00 AM. You can view it under the '📅 Book Appointment' tab!`;
+          }
+        } else {
+          botReply = "I can book that for you! Please specify a date in **YYYY-MM-DD** format (e.g., *'Book with Dr. Rajesh Kumar on 2026-11-01'*).";
+        }
+      } else if (q.includes('today') || q.includes('date')) {
+        const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        botReply = `Today is ${currentDate}.`;
+      } else if (q.includes('hi') || q.includes('hello') || q.includes('hey')) {
+        botReply = `Hello ${patientProfile.name}! I am your AI Health Assistant. Tell me if you'd like me to book a doctor appointment for you.`;
+      } else if (q.includes('headache') || q.includes('migraine')) {
+        botReply = 'Headaches can be caused by dehydration or stress. Drink water and rest. Would you like me to book an appointment with Dr. Ananya Verma (Neurology)?';
+      } else {
+        botReply = `Regarding "${userQuery}": Stay hydrated and ensure proper rest. You can also ask me to book an appointment directly!`;
       }
 
-      setChatMessages(prev => [...prev, { sender: "ai", text: aiReply }]);
-    }, 800);
+      setChatMessages((prev) => [...prev, { sender: 'bot', text: botReply }]);
+    }, 700);
   };
 
   const handleSignOut = () => {
     localStorage.clear();
-    navigate("/login", { replace: true });
+    navigate('/signup');
   };
 
-  const handleOpenReport = (reportUrl) => {
-    window.open(reportUrl, "_blank", "noopener,noreferrer");
-  };
+  const filteredDoctors =
+    selectedDeptFilter === 'All'
+      ? doctorsList
+      : doctorsList.filter((doc) => doc.dept === selectedDeptFilter);
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#0b0f19", color: "#fff", fontFamily: "Segoe UI, sans-serif", padding: "20px" }}>
-      
-      {/* Top Header Bar */}
-      <div style={{ backgroundColor: "#131b2e", padding: "20px 30px", borderRadius: "12px", border: "1px solid #1e293b", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div style={{ width: "48px", height: "48px", borderRadius: "50%", backgroundColor: "#16a34a", display: "flex", justifyContent: "center", alignItems: "center", fontSize: "20px", fontWeight: "bold" }}>
-            {patientName.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <h2 style={{ margin: 0, fontSize: "20px", color: "#fff" }}>MediLink AI — Patient Portal</h2>
-            <p style={{ margin: "4px 0 0 0", fontSize: "14px", color: "#38bdf8" }}>
-              Welcome back, {patientName}
-            </p>
-          </div>
-        </div>
-        <button 
-          onClick={handleSignOut}
-          style={{ backgroundColor: "#ef4444", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
-          Sign Out
-        </button>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button 
-            onClick={() => setActiveTab("dashboard")}
-            style={{ padding: "12px 24px", borderRadius: "8px", border: "none", backgroundColor: activeTab === "dashboard" ? "#2563eb" : "#131b2e", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
-            Dashboard & Prescriptions
-          </button>
-          <button 
-            onClick={() => setActiveTab("book")}
-            style={{ padding: "12px 24px", borderRadius: "8px", border: "none", backgroundColor: activeTab === "book" ? "#2563eb" : "#131b2e", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
-            Book Appointment
-          </button>
-          <button 
-            onClick={() => setActiveTab("ai")}
-            style={{ padding: "12px 24px", borderRadius: "8px", border: "none", backgroundColor: activeTab === "ai" ? "#2563eb" : "#131b2e", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
-            AI Health Assistant
-          </button>
+    <div style={dashStyles.appLayout}>
+      <header style={dashStyles.navbar}>
+        <div style={dashStyles.navBrand}>
+          <div style={dashStyles.navIcon}>+</div>
+          <span style={dashStyles.navTitle}>
+            MediLink <span style={{ color: '#0D9488' }}>AI</span>
+          </span>
         </div>
 
-        {appointments.length === 0 && (
-          <button 
-            onClick={handleResetSampleAppointments}
-            style={{ backgroundColor: "#334155", color: "#38bdf8", border: "1px solid #475569", padding: "8px 16px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}>
-            + Load Sample Appointments
+        <div style={dashStyles.navRight}>
+          <div style={dashStyles.userBadge}>
+            <span style={dashStyles.userDot}></span>
+            <div>
+              <div style={dashStyles.userName}>{patientProfile?.name}</div>
+              <div style={dashStyles.userRole}>{patientProfile?.email}</div>
+            </div>
+          </div>
+          <button type="button" onClick={handleSignOut} style={dashStyles.logoutBtn}>
+            Sign Out
           </button>
-        )}
-      </div>
+        </div>
+      </header>
 
-      {/* Tab 1: Dashboard & Prescriptions */}
-      {activeTab === "dashboard" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          
-          {/* Patient Profile Information Card */}
-          <div style={{ backgroundColor: "#131b2e", padding: "24px", borderRadius: "12px", border: "1px solid #1e293b" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h3 style={{ margin: 0, color: "#f8fafc", display: "flex", alignItems: "center", gap: "8px" }}>
-                👤 Patient Profile Information
-              </h3>
-              <button 
-                onClick={() => {
-                  setEditForm(profile);
-                  setIsEditingProfile(!isEditingProfile);
-                }}
-                style={{ backgroundColor: "#2563eb", color: "#fff", border: "none", padding: "6px 14px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}>
-                {isEditingProfile ? "Cancel" : "Edit Profile"}
-              </button>
+      <main style={dashStyles.mainContainer}>
+        <div style={dashStyles.tabRow}>
+          <button
+            type="button"
+            onClick={() => setActiveTab('profile')}
+            style={activeTab === 'profile' ? dashStyles.activeTabBtn : dashStyles.inactiveTabBtn}
+          >
+            👤 Patient Profile & AI Vitals
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('directory')}
+            style={activeTab === 'directory' ? dashStyles.activeTabBtn : dashStyles.inactiveTabBtn}
+          >
+            🏥 Doctors & Directory
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('appointments')}
+            style={activeTab === 'appointments' ? dashStyles.activeTabBtn : dashStyles.inactiveTabBtn}
+          >
+            📅 Book Appointment
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('aichat')}
+            style={activeTab === 'aichat' ? dashStyles.activeTabBtn : dashStyles.inactiveTabBtn}
+          >
+            🤖 AI Health Bot Chat
+          </button>
+        </div>
+
+        {/* TAB 1: PROFILE */}
+        {activeTab === 'profile' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={dashStyles.profileGrid}>
+              <div style={dashStyles.card}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={dashStyles.profileHeader}>
+                    <div style={dashStyles.avatarCircle}>
+                      {patientProfile?.name?.charAt(0).toUpperCase() || 'P'}
+                    </div>
+                    <div>
+                      <h2 style={dashStyles.patientName}>{patientProfile?.name}</h2>
+                      <span style={dashStyles.patientIdBadge}>ID: {patientProfile?.id}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(!isEditing)}
+                    style={dashStyles.editBtn}
+                  >
+                    {isEditing ? 'Cancel' : '✏️ Edit Profile'}
+                  </button>
+                </div>
+
+                <div style={dashStyles.divider} />
+
+                {isEditing ? (
+                  <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <h3 style={dashStyles.sectionHeading}>Edit Personal Details</h3>
+                    <div>
+                      <label style={dashStyles.inputLabel}>Full Name</label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={patientProfile.name}
+                        onChange={handleProfileChange}
+                        style={dashStyles.editInput}
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label style={dashStyles.inputLabel}>Phone Number</label>
+                        <input
+                          type="text"
+                          name="phone"
+                          value={patientProfile.phone}
+                          onChange={handleProfileChange}
+                          style={dashStyles.editInput}
+                        />
+                      </div>
+                      <div>
+                        <label style={dashStyles.inputLabel}>Age</label>
+                        <input
+                          type="number"
+                          name="age"
+                          value={patientProfile.age}
+                          onChange={handleProfileChange}
+                          style={dashStyles.editInput}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label style={dashStyles.inputLabel}>Gender</label>
+                        <select
+                          name="gender"
+                          value={patientProfile.gender}
+                          onChange={handleProfileChange}
+                          style={dashStyles.editSelect}
+                        >
+                          <option>Male</option>
+                          <option>Female</option>
+                          <option>Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={dashStyles.inputLabel}>Blood Group</label>
+                        <select
+                          name="bloodGroup"
+                          value={patientProfile.bloodGroup}
+                          onChange={handleProfileChange}
+                          style={dashStyles.editSelect}
+                        >
+                          <option>O+</option>
+                          <option>O-</option>
+                          <option>A+</option>
+                          <option>A-</option>
+                          <option>B+</option>
+                          <option>B-</option>
+                          <option>AB+</option>
+                          <option>AB-</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={dashStyles.inputLabel}>Known Allergies</label>
+                      <input
+                        type="text"
+                        name="allergies"
+                        value={patientProfile.allergies}
+                        onChange={handleProfileChange}
+                        style={dashStyles.editInput}
+                      />
+                    </div>
+
+                    <button type="submit" style={dashStyles.saveBtn}>
+                      💾 Save Profile Changes
+                    </button>
+                  </form>
+                ) : (
+                  <>
+                    <h3 style={dashStyles.sectionHeading}>Personal Information</h3>
+                    <div style={dashStyles.infoGrid}>
+                      <div style={dashStyles.infoItem}>
+                        <span style={dashStyles.infoLabel}>Email Address</span>
+                        <span style={dashStyles.infoValue}>{patientProfile?.email}</span>
+                      </div>
+                      <div style={dashStyles.infoItem}>
+                        <span style={dashStyles.infoLabel}>Phone Number</span>
+                        <span style={dashStyles.infoValue}>{patientProfile?.phone}</span>
+                      </div>
+                      <div style={dashStyles.infoItem}>
+                        <span style={dashStyles.infoLabel}>Age / Gender</span>
+                        <span style={dashStyles.infoValue}>{patientProfile?.age}Y • {patientProfile?.gender}</span>
+                      </div>
+                      <div style={dashStyles.infoItem}>
+                        <span style={dashStyles.infoLabel}>Blood Group</span>
+                        <span style={{ ...dashStyles.infoValue, color: '#DC2626' }}>{patientProfile?.bloodGroup}</span>
+                      </div>
+                      <div style={{ ...dashStyles.infoItem, gridColumn: 'span 2' }}>
+                        <span style={dashStyles.infoLabel}>Known Allergies</span>
+                        <span style={{ ...dashStyles.infoValue, color: '#B45309' }}>⚠️ {patientProfile?.allergies || 'None recorded'}</span>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div style={dashStyles.card}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '20px' }}>🧠</span>
+                  <h3 style={{ margin: 0, color: '#0F172A', fontSize: '16px' }}>AI Health Risk & Vitals Analysis</h3>
+                </div>
+
+                <div style={dashStyles.vitalsGrid}>
+                  <div style={dashStyles.vitalCard}>
+                    <span style={dashStyles.vitalCardLabel}>Overall Health Score</span>
+                    <span style={{ ...dashStyles.vitalCardValue, color: '#059669' }}>92 / 100</span>
+                  </div>
+                  <div style={dashStyles.vitalCard}>
+                    <span style={dashStyles.vitalCardLabel}>Metabolic Risk</span>
+                    <span style={{ ...dashStyles.vitalCardValue, color: '#D97706' }}>Low - Moderate</span>
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '10px', padding: '14px', marginTop: '12px' }}>
+                  <strong style={{ color: '#166534', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
+                    ✨ AI Personal Recommendation ({patientProfile.age}Y Male):
+                  </strong>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#14532D', lineHeight: '1.5' }}>
+                    Based on your profile, maintain 2.5L daily hydration and schedule routine metabolic screenings every 6 months.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {isEditingProfile ? (
-              <form onSubmit={handleSaveProfile} style={{ display: "flex", flexDirection: "column", gap: "16px", backgroundColor: "#0f172a", padding: "20px", borderRadius: "8px", border: "1px solid #334155" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "12px", color: "#94a3b8", marginBottom: "4px" }}>Full Name</label>
-                    <input 
-                      type="text" 
-                      value={editForm.name} 
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      style={{ width: "100%", backgroundColor: "#131b2e", color: "#fff", border: "1px solid #475569", borderRadius: "6px", padding: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
-                      required 
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: "12px", color: "#94a3b8", marginBottom: "4px" }}>Age</label>
-                    <input 
-                      type="number" 
-                      value={editForm.age} 
-                      onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
-                      style={{ width: "100%", backgroundColor: "#131b2e", color: "#fff", border: "1px solid #475569", borderRadius: "6px", padding: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
-                      required 
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: "12px", color: "#94a3b8", marginBottom: "4px" }}>Gender</label>
-                    <select 
-                      value={editForm.gender} 
-                      onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
-                      style={{ width: "100%", backgroundColor: "#131b2e", color: "#fff", border: "1px solid #475569", borderRadius: "6px", padding: "8px", fontSize: "14px", outline: "none" }}>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: "12px", color: "#94a3b8", marginBottom: "4px" }}>Blood Group</label>
-                    <select 
-                      value={editForm.bloodGroup} 
-                      onChange={(e) => setEditForm({ ...editForm, bloodGroup: e.target.value })}
-                      style={{ width: "100%", backgroundColor: "#131b2e", color: "#fff", border: "1px solid #475569", borderRadius: "6px", padding: "8px", fontSize: "14px", outline: "none" }}>
-                      <option value="A+">A+</option>
-                      <option value="A-">A-</option>
-                      <option value="B+">B+</option>
-                      <option value="B-">B-</option>
-                      <option value="AB+">AB+</option>
-                      <option value="AB-">AB-</option>
-                      <option value="O+">O+</option>
-                      <option value="O-">O-</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: "12px", color: "#94a3b8", marginBottom: "4px" }}>Phone Number</label>
-                    <input 
-                      type="text" 
-                      value={editForm.phone} 
-                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                      style={{ width: "100%", backgroundColor: "#131b2e", color: "#fff", border: "1px solid #475569", borderRadius: "6px", padding: "8px", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
-                      required 
-                    />
-                  </div>
-                </div>
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
-                  <button 
-                    type="button" 
-                    onClick={() => setIsEditingProfile(false)}
-                    style={{ backgroundColor: "#334155", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}>
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit" 
-                    style={{ backgroundColor: "#16a34a", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}>
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
-                <div style={{ backgroundColor: "#0f172a", padding: "14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                  <span style={{ color: "#94a3b8", fontSize: "12px", display: "block" }}>Full Name</span>
-                  <strong style={{ color: "#f8fafc", fontSize: "15px" }}>{profile.name}</strong>
-                </div>
-                <div style={{ backgroundColor: "#0f172a", padding: "14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                  <span style={{ color: "#94a3b8", fontSize: "12px", display: "block" }}>Age & Gender</span>
-                  <strong style={{ color: "#f8fafc", fontSize: "15px" }}>{profile.age} yrs, {profile.gender}</strong>
-                </div>
-                <div style={{ backgroundColor: "#0f172a", padding: "14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                  <span style={{ color: "#94a3b8", fontSize: "12px", display: "block" }}>Blood Group</span>
-                  <strong style={{ color: "#22c55e", fontSize: "15px" }}>{profile.bloodGroup}</strong>
-                </div>
-                <div style={{ backgroundColor: "#0f172a", padding: "14px", borderRadius: "8px", border: "1px solid #334155" }}>
-                  <span style={{ color: "#94a3b8", fontSize: "12px", display: "block" }}>Phone Number</span>
-                  <strong style={{ color: "#f8fafc", fontSize: "15px" }}>{profile.phone}</strong>
-                </div>
+            <div style={dashStyles.card}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '22px' }}>📄</span>
+                <h3 style={{ margin: 0, color: '#0F172A' }}>Smart Lab Report Summarizer</h3>
               </div>
-            )}
-          </div>
+              <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: '#64748B' }}>
+                Upload any PDF or image lab result to get instant plain-English summaries and flagged abnormal metrics.
+              </p>
 
-          {/* Medical Prescriptions Section */}
-          <div style={{ backgroundColor: "#131b2e", padding: "24px", borderRadius: "12px", border: "1px solid #1e293b" }}>
-            <h3 style={{ marginTop: 0, color: "#f8fafc", marginBottom: "16px" }}>My Medical Prescriptions from Doctors</h3>
-            {prescriptions.length === 0 ? (
-              <p style={{ color: "#94a3b8", fontSize: "14px" }}>No prescriptions issued by your doctors yet.</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {prescriptions.map((rx) => (
-                  <div key={rx.id} style={{ backgroundColor: "#0f172a", border: "1px solid #334155", borderRadius: "8px", padding: "16px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <strong style={{ color: "#38bdf8" }}>{rx.doctorName}</strong>
-                      <span style={{ color: "#94a3b8", fontSize: "12px" }}>{rx.date}</span>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                onChange={handleAnalyzeLabReport}
+                style={dashStyles.fileInput}
+              />
+
+              {isAnalyzingReport && (
+                <div style={{ marginTop: '14px', fontSize: '13px', color: '#0D9488', fontWeight: '600' }}>
+                  ⏳ Reading and extracting metrics from report...
+                </div>
+              )}
+
+              {labAnalysis && (
+                <div style={{ marginTop: '16px', backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '16px' }}>
+                  <strong style={{ color: '#0F172A', display: 'block', marginBottom: '6px' }}>
+                    Summary for {labReportFile}:
+                  </strong>
+                  <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#334155' }}>{labAnalysis.summary}</p>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                    {labAnalysis.metrics.map((m, idx) => (
+                      <div key={idx} style={{ backgroundColor: '#FFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '10px' }}>
+                        <span style={{ fontSize: '11px', color: '#64748B', display: 'block' }}>{m.name}</span>
+                        <strong style={{ fontSize: '14px', color: '#0F172A' }}>{m.value}</strong>
+                        <span style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', marginTop: '2px', color: m.status === 'Normal' ? '#059669' : '#DC2626' }}>
+                          {m.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ fontSize: '12px', color: '#0F766E', backgroundColor: '#CCFBF1', padding: '10px', borderRadius: '8px' }}>
+                    💡 <strong>Guidance:</strong> {labAnalysis.recommendation}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={dashStyles.profileGrid}>
+              <div style={dashStyles.card}>
+                <h3 style={dashStyles.sectionHeading}>📝 AI Symptom Tracker & Allergy Guard</h3>
+
+                <form onSubmit={handleAddSymptomLog} style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                  <input
+                    type="text"
+                    value={symptomLog}
+                    onChange={(e) => setSymptomLog(e.target.value)}
+                    placeholder="Log daily symptom (e.g., Mild headache)..."
+                    style={{ ...dashStyles.editInput, flex: 1 }}
+                  />
+                  <button type="submit" style={dashStyles.saveBtn}>Log</button>
+                </form>
+
+                <div style={{ maxHeight: '140px', overflowY: 'auto', marginBottom: '16px' }}>
+                  {loggedSymptoms.map((s, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#F8FAFC', borderRadius: '6px', marginBottom: '6px', border: '1px solid #E2E8F0', fontSize: '13px' }}>
+                      <span>{s.text}</span>
+                      <span style={{ color: '#64748B', fontSize: '11px' }}>{s.date}</span>
                     </div>
-                    <pre style={{ margin: 0, color: "#cbd5e1", fontFamily: "inherit", whiteSpace: "pre-wrap", fontSize: "13px" }}>{rx.details}</pre>
+                  ))}
+                </div>
+
+                <div style={{ height: '1px', backgroundColor: '#E2E8F0', margin: '16px 0' }} />
+
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#0F172A' }}>🛡️ Medicine / Food Allergy Safety Check</h4>
+                <form onSubmit={handleCheckAllergySafety} style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    value={allergyCheckInput}
+                    onChange={(e) => setAllergyCheckInput(e.target.value)}
+                    placeholder="Check medicine (e.g. Amoxicillin)..."
+                    style={{ ...dashStyles.editInput, flex: 1 }}
+                  />
+                  <button type="submit" style={{ ...dashStyles.saveBtn, backgroundColor: '#0F172A' }}>Check</button>
+                </form>
+
+                {allergyWarning && (
+                  <div style={{ marginTop: '10px', padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', backgroundColor: allergyWarning.includes('🚨') ? '#FEF2F2' : '#F0FDF4', color: allergyWarning.includes('🚨') ? '#991B1B' : '#166534', border: '1px solid #CBD5E1' }}>
+                    {allergyWarning}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+
+              <div style={dashStyles.card}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', color: '#0F172A' }}>⏱️ Medical History & Clinical Digest</h3>
+                  <button
+                    type="button"
+                    onClick={handleGenerateClinicalDigest}
+                    disabled={isGeneratingDigest}
+                    style={{ backgroundColor: '#0D9488', color: '#FFF', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                  >
+                    {isGeneratingDigest ? 'Generating...' : '⚡ Generate Doctor Summary'}
+                  </button>
+                </div>
+
+                {clinicalDigest && (
+                  <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #0D9488', padding: '12px', borderRadius: '8px', fontSize: '12px', color: '#0F172A', whiteSpace: 'pre-line', marginBottom: '16px' }}>
+                    <strong style={{ color: '#0D9488' }}>📋 Pre-Consultation Brief:</strong>
+                    {'\n' + clinicalDigest}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {medicalTimeline.map((item, idx) => (
+                    <div key={idx} style={{ padding: '10px 12px', backgroundColor: '#F8FAFC', borderLeft: '3px solid #0D9488', borderRadius: '4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748B' }}>
+                        <span>{item.dept}</span>
+                        <span>{item.date}</span>
+                      </div>
+                      <strong style={{ fontSize: '13px', color: '#0F172A', display: 'block', marginTop: '2px' }}>{item.title}</strong>
+                      <span style={{ fontSize: '12px', color: '#0D9488' }}>{item.doctor}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
+        )}
 
-          {/* Active Appointments Section */}
-          <div style={{ backgroundColor: "#131b2e", padding: "24px", borderRadius: "12px", border: "1px solid #1e293b" }}>
-            <h3 style={{ marginTop: 0, color: "#f8fafc", marginBottom: "20px" }}>Your Appointments</h3>
+        {/* TAB 2: DIRECTORY */}
+        {activeTab === 'directory' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={dashStyles.card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 4px 0', color: '#0F172A' }}>🏥 Hospital Specialist Directory</h3>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#64748B' }}>
+                    Browse specialized medical departments and real-time doctor availability.
+                  </p>
+                </div>
 
-            {appointments.length === 0 ? (
-              <p style={{ color: "#94a3b8" }}>You have no active appointments booked. Click on "Book Appointment" above to schedule one!</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                {appointments.map((appt) => (
-                  <div key={appt.id} style={{ backgroundColor: "#0f172a", border: "1px solid #334155", borderRadius: "10px", padding: "20px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                      <h4 style={{ margin: 0, fontSize: "16px", color: "#38bdf8" }}>
-                        {appt.doctorName || "Doctor"} <span style={{ fontSize: "13px", color: "#94a3b8" }}>({appt.specialty || "General"})</span>
-                      </h4>
-                      <span style={{ backgroundColor: "#1e293b", color: "#22c55e", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold" }}>
-                        {appt.status || "Confirmed"}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748B' }}>Filter Dept:</span>
+                  <select
+                    value={selectedDeptFilter}
+                    onChange={(e) => setSelectedDeptFilter(e.target.value)}
+                    style={dashStyles.editSelect}
+                  >
+                    <option value="All">All Departments</option>
+                    <option value="Neurology">Neurology</option>
+                    <option value="Cardiology">Cardiology</option>
+                    <option value="General Consultation">General Consultation</option>
+                    <option value="Orthopedics">Orthopedics</option>
+                    <option value="Pediatrics">Pediatrics</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+              {filteredDoctors.map((doc) => (
+                <div key={doc.id} style={{ ...dashStyles.card, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '50%',
+                            backgroundColor: doc.avatarColor,
+                            color: '#FFF',
+                            fontWeight: 'bold',
+                            fontSize: '18px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {doc.name.replace('Dr. ', '').charAt(0)}
+                        </div>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: '16px', color: '#0F172A' }}>{doc.name}</h4>
+                          <span style={{ fontSize: '12px', color: '#0D9488', fontWeight: 'bold' }}>{doc.dept}</span>
+                        </div>
+                      </div>
+
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          backgroundColor: doc.status === 'Available Today' ? '#DCFCE7' : '#FEF3C7',
+                          color: doc.status === 'Available Today' ? '#15803D' : '#B45309',
+                        }}
+                      >
+                        {doc.status === 'Available Today' ? '🟢 Available' : '🟡 In Consultation'}
                       </span>
                     </div>
 
-                    <p style={{ margin: "4px 0", fontSize: "13px", color: "#cbd5e1" }}>
-                      📅 {appt.date} | ⏰ {appt.time} | 🩺 {appt.type}
+                    <p style={{ fontSize: '12px', color: '#64748B', margin: '0 0 8px 0', fontWeight: '600' }}>
+                      🎓 {doc.degree} • {doc.experience}
                     </p>
+                    <p style={{ fontSize: '13px', color: '#334155', margin: '0 0 16px 0', lineHeight: '1.4' }}>
+                      {doc.bio}
+                    </p>
+                  </div>
 
-                    {appt.reportName && (
-                      <p style={{ margin: "8px 0 14px 0", fontSize: "13px" }}>
-                        <span style={{ color: "#94a3b8" }}>View Attached Report: </span>
-                        <button 
-                          onClick={() => handleOpenReport(appt.reportUrl)}
-                          style={{ background: "none", border: "none", color: "#38bdf8", textDecoration: "underline", cursor: "pointer", fontSize: "13px", padding: 0 }}>
-                          {appt.reportName}
-                        </button>
-                      </p>
-                    )}
-
-                    <button 
-                      onClick={() => handleCancelAppointment(appt.id)}
-                      style={{ backgroundColor: "#ef4444", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "13px", marginTop: "10px" }}>
-                      Cancel
+                  <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: '#64748B' }}>⏰ {doc.hours}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickBookDoctor(doc)}
+                      style={{ ...dashStyles.saveBtn, padding: '6px 12px', fontSize: '12px' }}
+                    >
+                      Book Appointment
                     </button>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-        </div>
-      )}
-
-      {/* Tab 2: Book Appointment */}
-      {activeTab === "book" && (
-        <div style={{ backgroundColor: "#131b2e", padding: "24px", borderRadius: "12px", border: "1px solid #1e293b", maxWidth: "700px" }}>
-          <h3 style={{ marginTop: 0, color: "#f8fafc", marginBottom: "8px" }}>Book a New Appointment</h3>
-          <p style={{ color: "#94a3b8", marginBottom: "24px" }}>Select a doctor, slot, and upload medical reports for consultation.</p>
-
-          <form onSubmit={handleBookAppointment} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "13px", color: "#94a3b8", marginBottom: "6px" }}>Select Doctor</label>
-              <select 
-                value={doctorName} 
-                onChange={(e) => {
-                  setDoctorName(e.target.value);
-                  if(e.target.value.includes("Sharma")) setSpecialty("Cardiology");
-                  else if(e.target.value.includes("Verma")) setSpecialty("Neurology");
-                  else setSpecialty("General Medicine");
-                }}
-                style={{ width: "100%", backgroundColor: "#0f172a", color: "#fff", border: "1px solid #334155", borderRadius: "8px", padding: "10px", fontSize: "14px", outline: "none" }}>
-                <option value="Dr. Rajesh Sharma">Dr. Rajesh Sharma (Cardiology)</option>
-                <option value="Dr. Priya Mehta">Dr. Priya Mehta (Neurology)</option>
-                <option value="Dr. Amit Patel">Dr. Amit Patel (General Medicine)</option>
-              </select>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", color: "#94a3b8", marginBottom: "6px" }}>Appointment Date</label>
-                <input 
-                  type="date" 
-                  value={date} 
-                  onChange={(e) => setDate(e.target.value)}
-                  style={{ width: "100%", backgroundColor: "#0f172a", color: "#fff", border: "1px solid #334155", borderRadius: "8px", padding: "10px", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
-                  required 
-                />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "13px", color: "#94a3b8", marginBottom: "6px" }}>Time Slot</label>
-                <select 
-                  value={time} 
-                  onChange={(e) => setTime(e.target.value)}
-                  style={{ width: "100%", backgroundColor: "#0f172a", color: "#fff", border: "1px solid #334155", borderRadius: "8px", padding: "10px", fontSize: "14px", outline: "none" }}>
-                  <option value="09:00 AM - 09:30 AM">09:00 AM - 09:30 AM</option>
-                  <option value="10:00 AM - 10:30 AM">10:00 AM - 10:30 AM</option>
-                  <option value="11:30 AM - 12:00 PM">11:30 AM - 12:00 PM</option>
-                  <option value="02:00 PM - 02:30 PM">02:00 PM - 02:30 PM</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "13px", color: "#94a3b8", marginBottom: "6px" }}>Consultation Type</label>
-              <select 
-                value={consultType} 
-                onChange={(e) => setConsultType(e.target.value)}
-                style={{ width: "100%", backgroundColor: "#0f172a", color: "#fff", border: "1px solid #334155", borderRadius: "8px", padding: "10px", fontSize: "14px", outline: "none" }}>
-                <option value="Video Call">Video Call (VC)</option>
-                <option value="In-Person">In-Person</option>
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "13px", color: "#94a3b8", marginBottom: "6px" }}>Reported Symptoms</label>
-              <textarea 
-                value={symptoms} 
-                onChange={(e) => setSymptoms(e.target.value)}
-                placeholder="Describe your symptoms e.g. cough, fever, chest pain..."
-                rows="3"
-                style={{ width: "100%", backgroundColor: "#0f172a", color: "#fff", border: "1px solid #334155", borderRadius: "8px", padding: "10px", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "13px", color: "#94a3b8", marginBottom: "6px" }}>Upload Medical Report (PDF / Image)</label>
-              <input 
-                type="file" 
-                onChange={(e) => setReportFile(e.target.files[0])}
-                style={{ color: "#cbd5e1", fontSize: "13px" }}
-              />
-            </div>
-
-            <button 
-              type="submit"
-              style={{ backgroundColor: "#2563eb", color: "#fff", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "15px", marginTop: "10px" }}>
-              Confirm & Book Appointment
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Tab 3: AI Health Assistant */}
-      {activeTab === "ai" && (
-        <div style={{ backgroundColor: "#131b2e", padding: "24px", borderRadius: "12px", border: "1px solid #1e293b", display: "flex", flexDirection: "column", height: "600px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <div>
-              <h3 style={{ margin: 0, color: "#f8fafc" }}>MediLink AI Health Assistant</h3>
-              <p style={{ margin: "4px 0 0 0", color: "#94a3b8", fontSize: "13px" }}>Ask health-related queries or summarize reports instantly using AI.</p>
-            </div>
-            <button 
-              onClick={() => setChatMessages([{ sender: "ai", text: "Hello! I am MediLink AI Health Assistant. How can I assist you with your health or medical reports today?" }])}
-              style={{ backgroundColor: "#334155", color: "#cbd5e1", border: "none", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>
-              Clear Chat
-            </button>
-          </div>
-
-          {/* Chat Messages Box */}
-          <div style={{ flex: 1, backgroundColor: "#0f172a", border: "1px solid #334155", borderRadius: "8px", padding: "16px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" }}>
-            {chatMessages.map((msg, index) => (
-              <div key={index} style={{ display: "flex", justifyContent: msg.sender === "user" ? "flex-end" : "flex-start" }}>
-                <div style={{ maxWidth: "75%", backgroundColor: msg.sender === "user" ? "#2563eb" : "#1e293b", color: "#fff", padding: "12px 16px", borderRadius: "10px", fontSize: "14px", lineHeight: "1.4" }}>
-                  {msg.text}
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+        )}
 
-          {/* Chat Input Form */}
-          <form onSubmit={handleSendMessage} style={{ display: "flex", gap: "12px" }}>
-            <input 
-              type="text" 
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Ask a health question (e.g. What helps with a severe sore throat?)..."
-              style={{ flex: 1, backgroundColor: "#0f172a", color: "#fff", border: "1px solid #334155", borderRadius: "8px", padding: "12px", fontSize: "14px", outline: "none" }}
-            />
-            <button 
-              type="submit"
-              style={{ backgroundColor: "#2563eb", color: "#fff", border: "none", padding: "0 24px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}>
-              Send
-            </button>
-          </form>
-        </div>
-      )}
+        {/* TAB 3: APPOINTMENT BOOKING WITH CANCEL OPTION */}
+        {activeTab === 'appointments' && (
+          <div style={dashStyles.profileGrid}>
+            <div style={dashStyles.card}>
+              <h3 style={dashStyles.sectionHeading}>📅 Book Doctor Appointment</h3>
+              {bookingSuccess && <div style={dashStyles.successAlert}>{bookingSuccess}</div>}
+              {bookingError && <div style={dashStyles.errorAlert}>⚠️ {bookingError}</div>}
 
+              <form onSubmit={handleBookAppointment} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={dashStyles.inputLabel}>Select Department</label>
+                  <select
+                    value={bookingData.dept}
+                    onChange={(e) => setBookingData({ ...bookingData, dept: e.target.value })}
+                    style={dashStyles.editSelect}
+                  >
+                    <option>Neurology</option>
+                    <option>Cardiology</option>
+                    <option>General Consultation</option>
+                    <option>Pediatrics</option>
+                    <option>Orthopedics</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={dashStyles.inputLabel}>Select Specialist Doctor</label>
+                  <select
+                    value={bookingData.doctor}
+                    onChange={(e) => setBookingData({ ...bookingData, doctor: e.target.value })}
+                    style={dashStyles.editSelect}
+                  >
+                    <option>Dr. Ananya Verma (Neurology Specialist)</option>
+                    <option>Dr. Rajesh Kumar (Cardiologist)</option>
+                    <option>Dr. Priya Nair (General Physician)</option>
+                    <option>Dr. Vikramaditya Seth (Orthopedics Specialist)</option>
+                    <option>Dr. Meera Iyer (Pediatrician)</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={dashStyles.inputLabel}>Appointment Date</label>
+                    <input
+                      type="date"
+                      min={todayStr}
+                      value={bookingData.date}
+                      onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
+                      style={dashStyles.editInput}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label style={dashStyles.inputLabel}>Time Slot</label>
+                    <select
+                      value={bookingData.time}
+                      onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
+                      style={dashStyles.editSelect}
+                    >
+                      <option>10:00 AM</option>
+                      <option>11:30 AM</option>
+                      <option>02:00 PM</option>
+                      <option>04:30 PM</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={dashStyles.inputLabel}>
+                    Medical Report / Lab Result <span style={{ color: '#64748B', fontWeight: 'normal' }}>(Optional)</span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => e.target.files[0] && setBookingData({ ...bookingData, reportFile: e.target.files[0].name })}
+                    style={dashStyles.fileInput}
+                  />
+                </div>
+
+                <button type="submit" style={dashStyles.saveBtn}>
+                  Confirm Appointment
+                </button>
+              </form>
+            </div>
+
+            <div style={dashStyles.card}>
+              <h3 style={dashStyles.sectionHeading}>📋 Your Scheduled Appointments</h3>
+              {appointments.length === 0 ? (
+                <p style={{ color: '#64748B', fontStyle: 'italic', fontSize: '14px' }}>
+                  No scheduled appointments yet. Book one using the form on the left or ask the AI Bot!
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {appointments.map((appt) => (
+                    <div key={appt.id} style={dashStyles.apptCard}>
+                      <div>
+                        <h4 style={{ margin: '0 0 4px 0', color: '#0F172A' }}>{appt.doctor}</h4>
+                        <p style={{ margin: 0, fontSize: '13px', color: '#64748B' }}>
+                          {appt.dept} • {appt.date} at {appt.time}
+                        </p>
+                        {appt.reportFile && (
+                          <div style={{ fontSize: '12px', color: '#0D9488', marginTop: '6px', fontWeight: '600' }}>
+                            📄 Attached Report: {appt.reportFile}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={dashStyles.confirmedBadge}>{appt.status}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCancelAppointment(appt.id)}
+                          style={dashStyles.cancelBtn}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: AI CHAT BOT */}
+        {activeTab === 'aichat' && (
+          <div style={dashStyles.card}>
+            <div style={dashStyles.cardHeader}>
+              <span style={dashStyles.cardIcon}>🤖</span>
+              <h3>MediLink AI Interactive Health Bot</h3>
+            </div>
+            <p style={dashStyles.cardDesc}>
+              Chat with our assistant or type a request like: <em>"Book an appointment with Dr. Rajesh Kumar on 2026-10-30 at 10:00 AM"</em>.
+            </p>
+
+            <div style={dashStyles.chatBox}>
+              {chatMessages.map((msg, index) => (
+                <div
+                  key={index}
+                  style={msg.sender === 'user' ? dashStyles.userBubble : dashStyles.botBubble}
+                >
+                  <strong>{msg.sender === 'user' ? 'You' : 'AI Health Bot'}:</strong>
+                  <p style={{ margin: '4px 0 0 0', whiteSpace: 'pre-line' }}>{msg.text}</p>
+                </div>
+              ))}
+            </div>
+
+            <form onSubmit={handleSendChatMessage} style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask health questions or say 'Book appointment on 2026-10-25'..."
+                style={dashStyles.editInput}
+              />
+              <button type="submit" style={dashStyles.saveBtn}>
+                Send
+              </button>
+            </form>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
+
+const dashStyles = {
+  appLayout: {
+    minHeight: '100vh',
+    width: '100%',
+    backgroundColor: '#F8FAFC',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    boxSizing: 'border-box',
+  },
+  navbar: {
+    height: '64px',
+    backgroundColor: '#0F172A',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 32px',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+  },
+  navBrand: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  navIcon: {
+    width: '32px',
+    height: '32px',
+    backgroundColor: '#0D9488',
+    color: '#FFFFFF',
+    borderRadius: '8px',
+    fontWeight: 'bold',
+    fontSize: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navTitle: {
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  navRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '20px',
+  },
+  userBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  userDot: {
+    width: '10px',
+    height: '10px',
+    backgroundColor: '#10B981',
+    borderRadius: '50%',
+  },
+  userName: {
+    color: '#FFFFFF',
+    fontSize: '14px',
+    fontWeight: '600',
+  },
+  userRole: {
+    color: '#94A3B8',
+    fontSize: '12px',
+  },
+  logoutBtn: {
+    backgroundColor: '#DC2626',
+    color: '#FFFFFF',
+    border: 'none',
+    padding: '8px 16px',
+    borderRadius: '6px',
+    fontSize: '13px',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  mainContainer: {
+    maxWidth: '1100px',
+    margin: '0 auto',
+    padding: '32px 24px',
+  },
+  tabRow: {
+    display: 'flex',
+    gap: '12px',
+    marginBottom: '24px',
+    flexWrap: 'wrap',
+  },
+  activeTabBtn: {
+    padding: '12px 20px',
+    backgroundColor: '#0D9488',
+    color: '#FFFFFF',
+    border: 'none',
+    borderRadius: '8px',
+    fontWeight: '600',
+    fontSize: '14px',
+    cursor: 'pointer',
+  },
+  inactiveTabBtn: {
+    padding: '12px 20px',
+    backgroundColor: '#FFFFFF',
+    color: '#64748B',
+    border: '1px solid #CBD5E1',
+    borderRadius: '8px',
+    fontWeight: '600',
+    fontSize: '14px',
+    cursor: 'pointer',
+  },
+  profileGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '24px',
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '16px',
+    border: '1px solid #E2E8F0',
+    padding: '24px',
+    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)',
+  },
+  profileHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+  },
+  avatarCircle: {
+    width: '56px',
+    height: '56px',
+    backgroundColor: '#0F172A',
+    color: '#0D9488',
+    borderRadius: '50%',
+    fontSize: '24px',
+    fontWeight: 'bold',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  patientName: {
+    margin: 0,
+    fontSize: '20px',
+    color: '#0F172A',
+  },
+  patientIdBadge: {
+    fontSize: '12px',
+    color: '#0D9488',
+    fontWeight: '600',
+    backgroundColor: '#CCFBF1',
+    padding: '2px 8px',
+    borderRadius: '4px',
+    display: 'inline-block',
+    marginTop: '4px',
+  },
+  editBtn: {
+    backgroundColor: '#F1F5F9',
+    color: '#0F172A',
+    border: '1px solid #CBD5E1',
+    padding: '6px 12px',
+    borderRadius: '6px',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  divider: {
+    height: '1px',
+    backgroundColor: '#E2E8F0',
+    margin: '20px 0',
+  },
+  sectionHeading: {
+    margin: '0 0 16px 0',
+    fontSize: '16px',
+    color: '#0F172A',
+  },
+  inputLabel: {
+    fontSize: '12px',
+    color: '#64748B',
+    fontWeight: '600',
+    display: 'block',
+    marginBottom: '4px',
+  },
+  editInput: {
+    width: '100%',
+    padding: '10px 12px',
+    borderRadius: '8px',
+    border: '1px solid #CBD5E1',
+    fontSize: '14px',
+    boxSizing: 'border-box',
+  },
+  editSelect: {
+    padding: '10px 12px',
+    borderRadius: '8px',
+    border: '1px solid #CBD5E1',
+    fontSize: '14px',
+    boxSizing: 'border-box',
+  },
+  fileInput: {
+    width: '100%',
+    padding: '8px',
+    borderRadius: '8px',
+    border: '1px dashed #CBD5E1',
+    backgroundColor: '#F8FAFC',
+    fontSize: '13px',
+    boxSizing: 'border-box',
+    cursor: 'pointer',
+  },
+  saveBtn: {
+    backgroundColor: '#0D9488',
+    color: '#FFFFFF',
+    border: 'none',
+    padding: '12px',
+    borderRadius: '8px',
+    fontWeight: '600',
+    fontSize: '14px',
+    cursor: 'pointer',
+  },
+  cancelBtn: {
+    backgroundColor: '#FEF2F2',
+    color: '#DC2626',
+    border: '1px solid #FECACA',
+    padding: '4px 10px',
+    borderRadius: '6px',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  infoGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '16px',
+  },
+  infoItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+  },
+  infoLabel: {
+    fontSize: '11px',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    fontWeight: '600',
+  },
+  infoValue: {
+    fontSize: '14px',
+    color: '#0F172A',
+    fontWeight: '600',
+  },
+  vitalsGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '12px',
+  },
+  vitalCard: {
+    backgroundColor: '#F8FAFC',
+    border: '1px solid #E2E8F0',
+    borderRadius: '10px',
+    padding: '12px 16px',
+  },
+  vitalCardLabel: {
+    fontSize: '11px',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    fontWeight: '600',
+    display: 'block',
+  },
+  vitalCardValue: {
+    fontSize: '16px',
+    color: '#0F172A',
+    fontWeight: '700',
+    marginTop: '4px',
+    display: 'block',
+  },
+  successAlert: {
+    backgroundColor: '#F0FDF4',
+    border: '1px solid #BBF7D0',
+    color: '#166534',
+    padding: '10px 14px',
+    borderRadius: '8px',
+    fontSize: '13px',
+    marginBottom: '14px',
+  },
+  errorAlert: {
+    backgroundColor: '#FEF2F2',
+    border: '1px solid #FECACA',
+    color: '#991B1B',
+    padding: '10px 14px',
+    borderRadius: '8px',
+    fontSize: '13px',
+    marginBottom: '14px',
+  },
+  apptCard: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '12px 16px',
+    backgroundColor: '#F8FAFC',
+    borderRadius: '10px',
+    border: '1px solid #E2E8F0',
+  },
+  confirmedBadge: {
+    backgroundColor: '#DCFCE7',
+    color: '#15803D',
+    padding: '4px 10px',
+    borderRadius: '6px',
+    fontSize: '12px',
+    fontWeight: '700',
+  },
+  cardHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    marginBottom: '8px',
+  },
+  cardIcon: {
+    fontSize: '22px',
+  },
+  cardDesc: {
+    margin: '0 0 16px 0',
+    fontSize: '13px',
+    color: '#64748B',
+  },
+  chatBox: {
+    minHeight: '260px',
+    maxHeight: '320px',
+    overflowY: 'auto',
+    backgroundColor: '#F8FAFC',
+    border: '1px solid #E2E8F0',
+    borderRadius: '12px',
+    padding: '16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  botBubble: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    border: '1px solid #E2E8F0',
+    padding: '12px 16px',
+    borderRadius: '12px',
+    maxWidth: '80%',
+    fontSize: '13px',
+    color: '#0F172A',
+  },
+  userBubble: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#CCFBF1',
+    border: '1px solid #99F6E4',
+    padding: '10px 14px',
+    borderRadius: '12px',
+    maxWidth: '80%',
+    fontSize: '13px',
+    color: '#115E59',
+  },
+};

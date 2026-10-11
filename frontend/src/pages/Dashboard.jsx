@@ -96,88 +96,103 @@ export default function Dashboard() {
     return text
       .replace(/\\n/g, '\n')
       .replace(/(##\s+[^\n]+)/g, '\n\n$1\n\n')
-      .replace(/(\n-\s+)/g, '\n\n- ')
       .replace(/\n{3,}/g, '\n\n');
   };
 
   if (loading) {
     return (
-      <div className="p-8 text-white min-h-screen bg-slate-950 flex items-center justify-center">
-        Loading patient records...
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-600 font-medium">
+        <div className="flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
+          Loading clinical record...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <header className="flex justify-between items-center border-b border-slate-800 pb-4">
-          <h1 className="text-2xl font-bold text-blue-400">
-            MediLink AI Patient Portal
-          </h1>
+    <div className="min-h-screen bg-slate-50 text-slate-800 p-6 md:p-10 font-sans">
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Header Bar */}
+        <header className="flex justify-between items-center bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-slate-900 text-teal-400 font-bold flex items-center justify-center text-xl">
+              +
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900 leading-tight">
+                MediLink <span className="text-teal-600">AI</span>
+              </h1>
+              <p className="text-xs text-slate-500">Patient EHR & Clinical Portal</p>
+            </div>
+          </div>
           <button
             onClick={() => {
               localStorage.removeItem('token');
               window.location.href = '/login';
             }}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-sm font-medium transition cursor-pointer"
+            className="px-4 py-2 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-lg text-sm font-semibold transition border border-slate-200 cursor-pointer"
           >
-            Logout
+            Sign Out
           </button>
         </header>
 
         {/* Patient Profile & AI Analysis Section */}
-        <main className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl space-y-6">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-            <h2 className="text-xl font-semibold">Medical Record Summary</h2>
+        <main className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-6">
+          <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Electronic Health Record (EHR)</h2>
+              <p className="text-xs text-slate-500">Summary of verified medical background</p>
+            </div>
             <button
               onClick={handleAnalyzeHistory}
               disabled={aiLoading}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded font-medium transition flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white rounded-lg font-semibold text-sm transition flex items-center gap-2 shadow-sm cursor-pointer"
             >
-              {aiLoading ? 'Analyzing...' : '✨ Analyze with AI'}
+              {aiLoading ? 'Analyzing Record...' : '✨ Generate Clinical Summary'}
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-slate-800/50 p-4 rounded-lg">
-              <span className="text-xs text-slate-400 block mb-1">Age</span>
-              <span className="text-lg font-bold">{profile.age || 'N/A'}</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+              <span className="text-xs text-slate-500 font-medium block mb-1">Age</span>
+              <span className="text-lg font-bold text-slate-800">{profile.age || 'N/A'}</span>
             </div>
-            <div className="bg-slate-800/50 p-4 rounded-lg">
-              <span className="text-xs text-slate-400 block mb-1">Gender</span>
-              <span className="text-lg font-bold">{profile.gender || 'N/A'}</span>
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+              <span className="text-xs text-slate-500 font-medium block mb-1">Gender</span>
+              <span className="text-lg font-bold text-slate-800">{profile.gender || 'N/A'}</span>
             </div>
-            <div className="bg-slate-800/50 p-4 rounded-lg">
-              <span className="text-xs text-slate-400 block mb-1">Blood Group</span>
-              <span className="text-lg font-bold text-blue-400">{profile.blood_group || 'N/A'}</span>
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+              <span className="text-xs text-slate-500 font-medium block mb-1">Blood Group</span>
+              <span className="text-lg font-bold text-teal-600">{profile.blood_group || 'N/A'}</span>
             </div>
-            <div className="bg-slate-800/50 p-4 rounded-lg">
-              <span className="text-xs text-slate-400 block mb-1">Emergency Contact</span>
-              <span className="text-lg font-bold">{profile.emergency_contact || 'N/A'}</span>
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+              <span className="text-xs text-slate-500 font-medium block mb-1">Emergency Contact</span>
+              <span className="text-lg font-bold text-slate-800">{profile.emergency_contact || 'N/A'}</span>
             </div>
           </div>
 
-          <div className="bg-slate-800/50 p-4 rounded-lg">
-            <span className="text-xs text-slate-400 block mb-1">Medical History</span>
-            <p className="text-sm leading-relaxed">{profile.medical_history || 'No history recorded.'}</p>
+          <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+            <span className="text-xs text-slate-500 font-medium block mb-1">Medical History Notes</span>
+            <p className="text-sm text-slate-700 leading-relaxed">{profile.medical_history || 'No medical history recorded.'}</p>
           </div>
 
+          {/* AI Clinical Summary Output */}
           {aiSummary && (
-            <div className="p-6 rounded-xl bg-purple-950/30 border border-purple-500/40 text-slate-200 space-y-4">
-              <div className="flex items-center gap-2 text-purple-400 font-semibold border-b border-purple-500/20 pb-3">
-                <span>🤖 Gemini AI Clinical Summary</span>
+            <div className="p-6 rounded-xl bg-teal-50/60 border border-teal-200 text-slate-800 space-y-4">
+              <div className="flex items-center gap-2 text-teal-800 font-semibold border-b border-teal-200/80 pb-3">
+                <span>🩺 AI Diagnostic Assessment</span>
               </div>
               <div className="text-sm leading-relaxed space-y-3">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    h1: ({ node, ...props }) => <h1 className="text-xl font-bold text-purple-300 mt-5 mb-2 border-b border-purple-500/20 pb-1" {...props} />,
-                    h2: ({ node, ...props }) => <h2 className="text-lg font-bold text-purple-300 mt-5 mb-2 border-b border-purple-500/20 pb-1" {...props} />,
-                    p: ({ node, ...props }) => <p className="text-slate-300 my-2 leading-relaxed" {...props} />,
-                    ul: ({ node, ...props }) => <ul className="list-disc space-y-2 my-3 text-slate-300 pl-5" {...props} />,
-                    li: ({ node, ...props }) => <li className="text-slate-300 pl-1" {...props} />,
-                    strong: ({ node, ...props }) => <strong className="font-semibold text-white" {...props} />,
+                    h1: ({ node, ...props }) => <h1 className="text-lg font-bold text-slate-900 mt-4 mb-2 border-b border-teal-200 pb-1" {...props} />,
+                    h2: ({ node, ...props }) => <h2 className="text-md font-bold text-slate-900 mt-4 mb-2 border-b border-teal-200 pb-1" {...props} />,
+                    p: ({ node, ...props }) => <p className="text-slate-700 my-2 leading-relaxed" {...props} />,
+                    ul: ({ node, ...props }) => <ul className="list-disc space-y-1 my-3 text-slate-700 pl-5" {...props} />,
+                    li: ({ node, ...props }) => <li className="text-slate-700 pl-1" {...props} />,
+                    strong: ({ node, ...props }) => <strong className="font-semibold text-slate-900" {...props} />,
                   }}
                 >
                   {formatMarkdown(aiSummary)}
@@ -188,11 +203,11 @@ export default function Dashboard() {
         </main>
 
         {/* AI Smart Appointment Scheduler Section */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl space-y-6">
-          <div className="border-b border-slate-800 pb-4">
-            <h2 className="text-xl font-semibold text-blue-400">📅 AI Smart Appointment Scheduling</h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Describe your symptoms or preferred schedule in plain text. Our AI will automatically match you with the right specialist and secure your slot.
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <h2 className="text-lg font-bold text-slate-900">📅 Smart Triage & Appointment Scheduling</h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Describe your symptoms or preferred time. The system will triage your urgency and assign the appropriate specialist.
             </p>
           </div>
 
@@ -202,44 +217,45 @@ export default function Dashboard() {
                 rows="3"
                 value={apptText}
                 onChange={(e) => setApptText(e.target.value)}
-                placeholder="e.g., I need a cardiology checkup next Tuesday morning because of mild chest discomfort..."
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-blue-500"
+                placeholder="e.g., I have been experiencing mild chest discomfort since yesterday and would like to see a cardiologist..."
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition"
                 required
               />
             </div>
             <button
               type="submit"
               disabled={apptLoading}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium rounded transition text-sm cursor-pointer flex items-center gap-2"
+              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-semibold rounded-lg transition text-sm cursor-pointer flex items-center gap-2 shadow-sm"
             >
-              {apptLoading ? 'AI Matching & Booking...' : '✨ Smart Book Appointment'}
+              {apptLoading ? 'Triage in Progress...' : 'Submit Triage Request'}
             </button>
           </form>
 
+          {/* Appointment Result Confirmation Box */}
           {appointmentResult && (
-            <div className="p-5 rounded-xl bg-blue-950/30 border border-blue-500/40 space-y-3">
-              <div className="flex items-center justify-between border-b border-blue-500/20 pb-2">
-                <span className="text-blue-400 font-semibold text-sm">✅ Appointment Confirmed</span>
-                <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-medium">
+            <div className="p-5 rounded-xl bg-slate-900 text-white space-y-3 shadow-md">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span className="text-teal-400 font-semibold text-sm">✅ Appointment Scheduled</span>
+                <span className="text-xs bg-teal-500/20 text-teal-300 px-2.5 py-1 rounded-full font-medium border border-teal-500/30">
                   {appointmentResult.status}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="grid grid-cols-2 gap-4 text-xs pt-1">
                 <div>
-                  <span className="text-slate-400 block">Assigned Specialist</span>
+                  <span className="text-slate-400 block mb-0.5">Assigned Specialist</span>
                   <span className="font-bold text-white text-sm">{appointmentResult.doctor_name}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Department</span>
-                  <span className="font-bold text-blue-300 text-sm">{appointmentResult.department}</span>
+                  <span className="text-slate-400 block mb-0.5">Department</span>
+                  <span className="font-bold text-teal-300 text-sm">{appointmentResult.department}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Scheduled Time</span>
+                  <span className="text-slate-400 block mb-0.5">Scheduled Date & Time</span>
                   <span className="font-bold text-white text-sm">{appointmentResult.appointment_date}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Urgency Classification</span>
-                  <span className="font-bold text-amber-300 text-sm">{appointmentResult.urgency}</span>
+                  <span className="text-slate-400 block mb-0.5">Urgency Level</span>
+                  <span className="font-bold text-amber-400 text-sm">{appointmentResult.urgency}</span>
                 </div>
               </div>
             </div>

@@ -1,19 +1,16 @@
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import DoctorDashboard from "./pages/DoctorDashboard";
-import PatientPortal from "./pages/PatientPortal";
+import { Routes, Route } from 'react-router-dom';
+import Signup from './pages/Signup';
+import PatientPortal from './pages/PatientPortal';
+import DoctorDashboard from './pages/DoctorDashboard';
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+      <Route path="/" element={<Signup />} />
+      <Route path="/login" element={<Signup />} />
+      <Route path="/signup" element={<Signup />} /> {/* Add this line */}
       <Route path="/patient-portal" element={<PatientPortal />} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
     </Routes>
   );
 }
