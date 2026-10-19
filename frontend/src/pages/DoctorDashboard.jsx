@@ -380,46 +380,41 @@ export default function DoctorDashboard() {
           )}
         </div>
 {/* Right Panel: Active Consultation Workspace & Prescription Builder */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {selectedPatient && (
-                <div style={docStyles.card}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <h3 style={{ margin: 0, color: '#0F172A' }}>🩺 Active Consultation: {selectedPatient.name}</h3>
-                  </div>
-
-                  <div style={docStyles.infoGrid}>
-                    <div>
-                      <span style={docStyles.label}>Consultation Type</span>
-                      <strong style={{ fontSize: '13px', color: '#1E40AF' }}>{selectedPatient.type} Visit</strong>
-                    </div>
-                    <div>
-                      <span style={docStyles.label}>Patient Uploaded Report</span>
-                      {selectedPatient.reportFile ? (
-                        <button
-                          type="button"
-                          onClick={() => setShowReportModal(true)}
-                          style={{
-                            backgroundColor: '#CCFBF1',
-                            color: '#0F766E',
-                            border: '1px solid #99F6E4',
-                            padding: '4px 8px',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            marginTop: '2px',
-                          }}
-                        >
-                          📄 View {selectedPatient.reportFile}
-                        </button>
-                      ) : (
-                        <strong style={{ fontSize: '13px', color: '#94A3B8' }}>None uploaded</strong>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
+<div style={docStyles.infoGrid}>
+              <div>
+                <span style={docStyles.label}>Consultation Type</span>
+                <strong style={{ fontSize: '13px', color: '#1E40AF' }}>{selectedPatient.type} Visit</strong>
+              </div>
+             <div style={docStyles.infoGrid}>
+              <div>
+                <span style={docStyles.label}>Consultation Type</span>
+                <strong style={{ fontSize: '13px', color: '#1E40AF' }}>{selectedPatient.type} Visit</strong>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={docStyles.label}>Patient Uploaded Report</span>
+                {selectedPatient.reportFile || selectedPatient.file || selectedPatient.report || selectedPatient.fileName ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowReportModal(true)}
+                    style={{
+                      backgroundColor: '#CCFBF1',
+                      color: '#0F766E',
+                      border: '1px solid #99F6E4',
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      marginTop: '2px'
+                    }}
+                  >
+                    View {selectedPatient.reportFile || selectedPatient.file || selectedPatient.report || selectedPatient.fileName}
+                  </button>
+                ) : (
+                  <span style={{ fontSize: '13px', color: '#64748B' }}>None uploaded</span>
+                )}
+              </div>
+            </div>
               {/* Digital Prescription Builder Integrated in Active Appointment */}
               <div style={docStyles.card}>
                 <h3 style={docStyles.heading}>💊 Digital Prescription Builder ({selectedPatient?.name || 'Select Patient'})</h3>
