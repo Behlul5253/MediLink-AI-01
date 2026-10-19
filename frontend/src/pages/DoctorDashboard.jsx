@@ -23,6 +23,12 @@ export default function DoctorDashboard() {
   const [patientQueue, setPatientQueue] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
+  // Auto-select the first patient in the queue if none is selected
+  useEffect(() => {
+    if (patientQueue.length > 0 && !selectedPatient) {
+      setSelectedPatient(patientQueue[0]);
+    }
+  }, [patientQueue]);
 
   // Leave Management State
   const [leaves, setLeaves] = useState([
@@ -314,71 +320,75 @@ export default function DoctorDashboard() {
         </div>
 
         {/* TAB 1: PATIENT QUEUE & ACTIVE CONSULTATION */}
-        {activeTab === 'queue' && (
-          <div style={docStyles.grid}>
-            {/* Left Panel: Patient Queue */}
-           <div style={docStyles.card}>
-          <h3 style={docStyles.heading}>📋 Assigned Patient Queue</h3>
-          {patientQueue.length === 0 ? (
-            <p style={{ color: '#64748B', fontSize: '13px' }}>No patients have booked an appointment with you yet.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {patientQueue.map((patient) => (
-                <div
-                  key={patient.id || patient.date + patient.time}
-                  onClick={() => setSelectedPatient(patient)}
-                  style={{
-                    ...docStyles.queueItem,
-                    borderColor: selectedPatient?.id === patient.id ? '#0D9488' : '#E2E8F0',
-                    backgroundColor: selectedPatient?.id === patient.id ? '#F0FDF4' : '#F8FAFC',
-                    cursor: 'pointer',
-                    padding: '12px',
-                    borderRadius: '8px'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ fontSize: '15px', color: '#0F172A' }}>{patient.name || 'rahul sharma'}</strong>
-                    <span style={{ fontSize: '12px', color: '#64748B' }}>{patient.time}</span>
-                  </div>
+      {activeTab === 'queue' && (
+        <div style={docStyles.grid}>
+          {/* Left Panel: Patient Queue */}
+          <div style={docStyles.card}>
+            <h3 style={docStyles.heading}>📋 Assigned Patient Queue</h3>
+            {patientQueue.length === 0 ? (
+              <p style={{ color: '#64748B', fontSize: '13px' }}>No patients have booked an appointment with you yet.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {patientQueue.map((patient) => (
+                  <div
+                    key={patient.id || patient.name}
+                    onClick={() => setSelectedPatient(patient)}
+                    style={{
+                      ...docStyles.queueItem,
+                      borderColor: selectedPatient?.name === patient.name ? '#0D9488' : '#E2E8F0',
+                      backgroundColor: selectedPatient?.name === patient.name ? '#F0FDFA' : '#F8FAFC',
+                      cursor: 'pointer',
+                      padding: '12px',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong style={{ fontSize: '15px', color: '#0F172A' }}>{patient.name || 'rahul sharma'}</strong>
+                      <span style={{ fontSize: '12px', color: '#64748B' }}>{patient.time}</span>
+                    </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#64748B' }}>
-                      {patient.date} • <span style={{ color: '#1E40AF', fontWeight: 'bold' }}>{patient.type}</span>
-                    </p>
-                  </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                      <p style={{ margin: 0, fontSize: '12px', color: '#64748B' }}>
+                        {patient.date} • <span style={{ color: '#1E40AF', fontWeight: 'bold' }}>{patient.type}</span>
+                      </p>
+                    </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                    <span style={{ fontSize: '11px', color: '#059669', fontWeight: '500' }}>
-                      📎 Report: {patient.reportFile || patient.file || 'None uploaded'}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUpdatePatientStatus(
-                          patient.id,
-                          patient.status === 'Completed' ? 'Pending' : 'Completed'
-                        );
-                      }}
-                      style={{
-                        fontSize: '11px',
-                        fontWeight: 'bold',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        backgroundColor: patient.status === 'Completed' ? '#DCFCE7' : '#FEF3C7',
-                        color: patient.status === 'Completed' ? '#15803D' : '#B45309'
-                      }}
-                    >
-                      {patient.status === 'Completed' ? 'Completed' : 'Mark Completed'}
-                    </button>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                      <span style={{ fontSize: '11px', color: '#059669', fontWeight: '500' }}>
+                        📎 Report: {patient.reportFile || patient.file || patient.report || patient.fileName || 'None uploaded'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (typeof handleUpdatePatientStatus === 'function') {
+                            handleUpdatePatientStatus(
+                              patient.id,
+                              patient.status === 'Completed' ? 'Pending' : 'Completed'
+                            );
+                          }
+                        }}
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          backgroundColor: patient.status === 'Completed' ? '#DCFCE7' : '#FEF3C7',
+                          color: patient.status === 'Completed' ? '#15803D' : '#B45309'
+                        }}
+                      >
+                        {patient.status === 'Completed' ? 'Completed' : 'Mark Completed'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right Panel: Active Consultation Workspace & Prescription Builder */}
 {/* Right Panel: Active Consultation Workspace & Prescription Builder */}
 <div style={docStyles.card}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
