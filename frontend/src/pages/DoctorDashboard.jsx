@@ -67,12 +67,11 @@ export default function DoctorDashboard() {
     }
 
     // Load appointments from localStorage and flexibly filter for the logged-in doctor
-    const allAppointments = JSON.parse(localStorage.getItem('hospital_appointments') || '[]');
-    const docIdentifier = currentDocName.replace('Dr. ', '').toLowerCase(); // e.g., "priya nair" or "ananya verma"
-    
+  const allAppointments = JSON.parse(localStorage.getItem('doctorAppointments') || '[]');
+  const docIdentifier = currentDocName.replace('Dr. ', '').toLowerCase();// e.g., "priya nair" or "ananya verma"
     const doctorAppointments = allAppointments.filter(
-      (appt) => appt.doctor && appt.doctor.toLowerCase().includes(docIdentifier)
-    );
+  (appt) => appt.doctor && (appt.doctor.toLowerCase().includes(docIdentifier) || appt.doctor.toLowerCase().includes(currentDocName.toLowerCase()))
+);
 
     // Default demo queue if no appointments are booked yet for this doctor
     const defaultQueue = [
