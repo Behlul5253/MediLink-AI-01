@@ -175,12 +175,14 @@ export default function PatientPortal() {
 
     const newAppt = {
       id: Date.now(),
+      name: 'rahul sharma', // Patient Name
       doctor: selectedDoctor,
       dept: department,
       type: appointmentType,
       date: appointmentDate,
       time: appointmentTime,
-      file: appointmentFile ? appointmentFile.name : 'None'
+      reportFile: appointmentFile ? appointmentFile.name : 'None', // Uploaded Report File
+      status: 'Pending'
     };
 
     // --- ADD THESE LINES HERE ---
