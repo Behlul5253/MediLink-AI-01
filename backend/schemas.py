@@ -25,3 +25,19 @@ class PatientProfileResponse(PatientProfileCreate):
 
     class Config:
         from_attributes = True
+
+# --- ADD THESE NEW SCHEMAS BELOW ---
+class AppointmentCreate(BaseModel):
+    department: str
+    doctor_name: str
+    appointment_date: str
+    time_slot: str
+    appointment_type: Optional[str] = "In-Person"
+    medical_report: Optional[str] = None
+
+class AppointmentResponse(AppointmentCreate):
+    id: int
+    status: Optional[str] = "Confirmed"
+
+    class Config:
+        from_attributes = True

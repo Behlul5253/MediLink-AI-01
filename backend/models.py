@@ -25,6 +25,8 @@ class Appointment(Base):
     medical_history = Column(String)
     department = Column(String)
     appointment_date = Column(String)
+    time_slot = Column(String, default="10:00 AM")       # <-- Added time slot
+    appointment_type = Column(String, default="In-Person") # <-- Added appointment type
     urgency = Column(String)
     attached_file = Column(String, default="None")
     ai_analysis = Column(String, default="")
